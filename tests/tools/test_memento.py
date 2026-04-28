@@ -198,7 +198,7 @@ def test_recall_empty_memory(employee_root, fake_vessel):
 def test_recall_after_store_returns_context(employee_root, fake_vessel, monkeypatch):
     """recall returns the patched RecallContext from the adapter."""
     from company.assets.tools.memento import memento as memento_mod
-    from onemancompany.core.memory import RecallContext
+    from company.assets.tools.memento.memento import RecallContext
 
     class _StoreAdapter:
         def __init__(self, **_):
@@ -258,7 +258,7 @@ def test_recall_top_k_clamps(employee_root, fake_vessel, monkeypatch):
             pass
 
         async def recall(self, query, conv_id):
-            from onemancompany.core.memory import RecallContext
+            from company.assets.tools.memento.memento import RecallContext
             return RecallContext(raw_text="", session_ids=[], metadata={})
 
     monkeypatch.setattr(memento_mod, "MemoryV4Adapter", _CapturingAdapter)
@@ -291,7 +291,7 @@ def test_recall_rejects_empty_query(employee_root, fake_vessel):
 def test_isolation_two_employees(employee_root, monkeypatch):
     """Sessions stored under E00006 are invisible to E00007."""
     from company.assets.tools.memento import memento as memento_mod
-    from onemancompany.core.memory import RecallContext
+    from company.assets.tools.memento.memento import RecallContext
 
     (employee_root / "E00007").mkdir(exist_ok=True)
 

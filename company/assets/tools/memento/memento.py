@@ -16,8 +16,16 @@ from langchain_core.tools import tool
 from loguru import logger
 
 from onemancompany.core.config import EMPLOYEES_DIR
-from onemancompany.core.memory import MemoryV4Adapter
 from onemancompany.core.vessel import _current_vessel
+
+from .memento_v4 import (
+    AblationFlags,
+    Conversation,
+    MemoryV4Adapter,
+    RecallContext,
+    Session,
+    Turn,
+)
 
 
 _VALID_ROLES = {"user", "assistant"}
@@ -72,8 +80,6 @@ def _next_session_num(sessions_dir: Path) -> int:
 
 def _load_existing_sessions(sessions_dir: Path):
     """Return sorted list of memento Session objects."""
-    from onemancompany.core.memory import Session, Turn
-
     sessions = []
     for path in sorted(sessions_dir.glob("*.json")):
         try:
@@ -110,7 +116,6 @@ def _write_session_file(sessions_dir: Path, session_num: int, turns: list[dict])
 
 def _build_conversation(sessions_dir: Path, employee_id: str):
     """Load all session files and wrap them in a Conversation."""
-    from onemancompany.core.memory import Conversation
     sessions = _load_existing_sessions(sessions_dir)
     return Conversation(
         conv_id=abs(hash(employee_id)) % (10**8),
@@ -131,7 +136,7 @@ async def _run_recall(adapter, conv, conv_id, query):
 
 def _build_store_result(mem_root: Path, employee_id: str, session_num: int) -> dict:
     """Read back the new SessionNode + edge counts to populate the result."""
-    from onemancompany.core.memory.memento_v4.causal.storage import (
+    from .memento_v4.causal.storage import (
         find_session_node, load_all_edges,
     )
 
@@ -200,7 +205,6 @@ def store(turns: list[dict]) -> dict:
     except OSError as exc:
         return {"status": "error", "message": f"session write failed: {exc}"}
 
-    from onemancompany.core.memory import AblationFlags
 
     adapter = MemoryV4Adapter(
         memory_root=mem_root,
@@ -259,7 +263,6 @@ def recall(query: str, top_k: int = 5) -> dict:
             "session_ids": [],
         }
 
-    from onemancompany.core.memory import AblationFlags
 
     # Use a broad retrieval window (>= 10) so the adapter's BFS seed pool
     # is large enough; trim returned ids to the caller's requested top_k.
