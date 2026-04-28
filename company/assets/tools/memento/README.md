@@ -312,6 +312,6 @@ sessions are equally relevant (sess21 is the Acme dashboard URL —
 acceptable noise, the agent still quotes the SAML facts from
 sess1 verbatim).
 
-Per-query latency on ppapi `gemini-3-flash-preview`: ~100-130s
+Per-query latency on `gemini-3-flash-preview`: ~100-130s
 (includes one LLM call to plan the recall + one to compose the
 final answer; the recall tool itself is local, sub-second).
