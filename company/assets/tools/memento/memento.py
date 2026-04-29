@@ -18,7 +18,7 @@ from loguru import logger
 from onemancompany.core.config import EMPLOYEES_DIR
 from onemancompany.core.vessel import _current_vessel
 
-from .memento_v4 import (
+from memento_v4 import (
     AblationFlags,
     Conversation,
     MemoryV4Adapter,
@@ -136,7 +136,7 @@ async def _run_recall(adapter, conv, conv_id, query):
 
 def _build_store_result(mem_root: Path, employee_id: str, session_num: int) -> dict:
     """Read back the new SessionNode + edge counts to populate the result."""
-    from .memento_v4.causal.storage import (
+    from memento_v4.causal.storage import (
         find_session_node, load_all_edges,
     )
 
