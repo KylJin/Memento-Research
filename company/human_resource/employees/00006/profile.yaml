@@ -1,24 +1,23 @@
 api_provider: openrouter
 current_quarter_tasks: 0
-department: Operations
+department: Engineering
 desk_position:
-- 11
-- 0
-employee_number: '00003'
+- 6
+- 2
+employee_number: '00006'
 hosting: company
-level: 4
+level: 3
 llm_model: anthropic/claude-sonnet-4-20250514
-name: Research Director
-nickname: Director
+name: Adversarial Critic
+nickname: Critic
 performance_history: []
 permissions:
 - company_file_access
 - web_search
-- asset_management
-role: COO
+role: QA
 salary_per_1m_tokens: 7.0
 skills:
-- research_orchestration
-sprite: coo
-temperature: 0.4
-title: Research Director
+- adversarial_review
+sprite: qa
+temperature: 0.3
+title: Senior QA
