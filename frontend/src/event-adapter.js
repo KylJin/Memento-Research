@@ -20,17 +20,19 @@ export class EventAdapter {
     // Employee ID → display info
     this.employees = {
       '00001': { name: 'You', initials: 'U', role: 'director' },
-      '00002': { name: 'Research Director', initials: 'RD', role: 'director' },
-      '00003': { name: 'Adversarial Critic', initials: 'AC', role: 'critic' },
-      '00004': { name: 'Topic Refiner', initials: 'TR', role: 'producer' },
-      '00005': { name: 'EA', initials: 'EA', role: 'system' },
-      '00006': { name: 'Literature Surveyor', initials: 'LS', role: 'producer' },
-      '00007': { name: 'Idea Generator', initials: 'IG', role: 'producer' },
-      '00008': { name: 'Methodology Designer', initials: 'MD', role: 'producer' },
-      '00009': { name: 'Experiment Designer', initials: 'ED', role: 'producer' },
-      '00010': { name: 'Experimentalist', initials: 'EX', role: 'producer' },
-      '00011': { name: 'Result Analyst', initials: 'RA', role: 'producer' },
-      '00012': { name: 'Paper Writer', initials: 'PW', role: 'producer' },
+      '00002': { name: 'HR', initials: 'HR', role: 'system' },
+      '00003': { name: 'COO', initials: 'CO', role: 'system' },
+      '00004': { name: 'Research Director', initials: 'RD', role: 'director' },
+      '00005': { name: 'CSO', initials: 'CS', role: 'system' },
+      '00006': { name: 'Topic Refiner', initials: 'TR', role: 'producer' },
+      '00007': { name: 'Literature Surveyor', initials: 'LS', role: 'producer' },
+      '00008': { name: 'Idea Generator', initials: 'IG', role: 'producer' },
+      '00009': { name: 'Methodology Designer', initials: 'MD', role: 'producer' },
+      '00010': { name: 'Experiment Designer', initials: 'ED', role: 'producer' },
+      '00011': { name: 'Experimentalist', initials: 'EX', role: 'producer' },
+      '00012': { name: 'Result Analyst', initials: 'RA', role: 'producer' },
+      '00013': { name: 'Paper Writer', initials: 'PW', role: 'producer' },
+      '00014': { name: 'Adversarial Critic', initials: 'AC', role: 'critic' },
     };
   }
 
@@ -597,15 +599,15 @@ export class EventAdapter {
 
   _inferStageFromEmployee(empId) {
     const map = {
-      '00004': 1, // Topic Refiner
-      '00006': 2, // Literature Surveyor
-      '00007': 3, // Idea Generator
-      '00008': 4, // Methodology Designer
-      '00009': 5, // Experiment Designer
-      '00010': 6, // Experimentalist
-      '00011': 7, // Result Analyst
-      '00012': 8, // Paper Writer
-      '00003': 9, // Adversarial Critic / Peer Reviewer
+      '00006': 1, // Topic Refiner
+      '00007': 2, // Literature Surveyor
+      '00008': 3, // Idea Generator
+      '00009': 4, // Methodology Designer
+      '00010': 5, // Experiment Designer
+      '00011': 6, // Experimentalist
+      '00012': 7, // Result Analyst
+      '00013': 8, // Paper Writer
+      '00014': 9, // Adversarial Critic / Peer Reviewer
     };
     return map[empId] || null;
   }
