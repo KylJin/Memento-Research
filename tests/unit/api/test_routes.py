@@ -322,7 +322,7 @@ class TestCeoSubmitTask:
         assert data["status"] == "processing"
 
     async def test_routes_to_ea_initializes_task_tree(self):
-        """CEO task submission creates a TaskTree with CEO root and EA child."""
+        """CEO task submission creates a TaskTree with a CEO root."""
         state = _make_state()
         bus = EventBus()
         mock_loop = MagicMock()
@@ -354,11 +354,8 @@ class TestCeoSubmitTask:
         assert root is not None
         assert root.node_type == "ceo_prompt"
         assert root.description == "Build a website"
-        # EA is child of CEO root
-        children = saved_tree.get_active_children(root.id)
-        assert len(children) >= 1
-        ea_node = children[0]
-        assert ea_node.id != root.id
+        # Pipeline stage children are created by PipelineEngine when a stage
+        # employee is available; this route is responsible for the CEO root.
 
 
 # ---------------------------------------------------------------------------
