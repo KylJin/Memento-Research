@@ -591,7 +591,7 @@ async def ceo_submit_task(
                     "You MUST dispatch these stages to the specified employees:\n" + "\n".join(lines)
                 )
         except (json.JSONDecodeError, AttributeError):
-            pass
+            logger.warning("Invalid stage_assignments JSON: {}", stage_assignments)
 
     loop = get_agent_loop(EA_ID)
     if loop:
