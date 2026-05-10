@@ -1157,12 +1157,16 @@ function getStageCard(id, title, agentName, agentInitials) {
 function updateProducer(cardId, content) {
   const el = document.getElementById('sc-prod-text-' + cardId);
   if (!el) return;
-  // Specialized rendering for literature-conflict-graph stage output (hypothesis cards + ID hover).
-  // Falls through to plain markdown for any other content.
+  // Always sanitize first — strips project IDs, workspace markers, and
+  // absolute /Users/... paths. The specialized lcg renderer also runs on the
+  // cleaned content so its output cannot bypass that boundary.
+  const cleaned = _clean(content);
+  // Specialized rendering for literature-conflict-graph stage output
+  // (hypothesis cards + ID hover). Falls through to plain markdown otherwise.
   const lcgHtml = (typeof window._tryRenderLcg === 'function')
-    ? window._tryRenderLcg(content)
+    ? window._tryRenderLcg(cleaned)
     : null;
-  el.innerHTML = lcgHtml || _renderMd(_clean(content));
+  el.innerHTML = lcgHtml || _renderMd(cleaned);
   _scroll();
 }
 

@@ -106,19 +106,24 @@ export function parseLcgOutput(text) {
   return { advisorAnswer, anomalies, hypotheses };
 }
 
-/** Wrap inline hXXX / aXXX refs in spans for hover, given the set of known IDs. */
-export function wrapInlineRefs(html, knownIds) {
+/** Wrap inline hXXX / aXXX refs in spans for hover, given the set of known IDs.
+ *  IDs are namespaced with `ns` so a hover lookup resolves to THIS render's
+ *  data even when another render used the same short ID later.
+ */
+export function wrapInlineRefs(html, knownIds, ns) {
   if (!html || !knownIds || !knownIds.size) return html;
   // Split on tags so we don't touch HTML attributes / inside <code>.
   return html.replace(/(<[^>]+>)|([^<]+)/g, (full, tag, txt) => {
     if (tag) return tag;
     return txt.replace(_ID_RE, (m) =>
-      knownIds.has(m) ? `<span class="lcg-ref" data-lcg-id="${m}">${m}</span>` : m
+      knownIds.has(m)
+        ? `<span class="lcg-ref" data-lcg-id="${ns}__${m}">${m}</span>`
+        : m
     );
   });
 }
 
-function _renderHypCard(h) {
+function _renderHypCard(h, ns) {
   const rows = [];
   if (h.mechanism) rows.push(['Mechanism', _esc(h.mechanism)]);
   if (h.predictions.length) {
@@ -145,20 +150,36 @@ function _renderHypCard(h) {
         `<div class="lcg-row"><div class="lcg-row-label">${label}</div><div class="lcg-row-content">${content}</div></div>`
     )
     .join('');
-  return `<details class="lcg-card" id="lcg-${_esc(h.id)}"><summary><span class="lcg-id">${_esc(h.id)}</span>${_esc(h.title)}</summary><div class="lcg-card-body">${body}</div></details>`;
+  // Card id namespaced — multiple renders on the same page would otherwise
+  // collide on `id="lcg-h202"` (DOM uniqueness violation).
+  return `<details class="lcg-card" id="lcg-${ns}__${_esc(h.id)}"><summary><span class="lcg-id">${_esc(h.id)}</span>${_esc(h.title)}</summary><div class="lcg-card-body">${body}</div></details>`;
 }
 
-/** Render parsed lcg output as HTML. Side effect: stashes lookup map for hover. */
+let _renderCounter = 0;
+
+/** Render parsed lcg output as HTML. Side effect: stashes lookup map for hover.
+ *
+ *  Each invocation gets a unique namespace `lcgN` and writes into
+ *  `window._lcgIndex[`${ns}__${id}`]`. Inline refs (`<span class="lcg-ref">`)
+ *  carry the namespaced key in `data-lcg-id`, so a hover reads exactly the
+ *  hypothesis the user is looking at — even if a later render reused the same
+ *  short ID for different content.
+ */
 export function renderLcgHtml(parsed) {
   if (!parsed) return null;
+  const ns = `lcg${++_renderCounter}`;
   const knownIds = new Set([
     ...parsed.hypotheses.map((h) => h.id),
     ...parsed.anomalies.map((a) => a.id),
   ]);
   if (typeof window !== 'undefined') {
     window._lcgIndex = window._lcgIndex || {};
-    for (const h of parsed.hypotheses) window._lcgIndex[h.id] = { kind: 'hyp', ...h };
-    for (const a of parsed.anomalies) window._lcgIndex[a.id] = { kind: 'anom', ...a };
+    for (const h of parsed.hypotheses) {
+      window._lcgIndex[`${ns}__${h.id}`] = { kind: 'hyp', ns, ...h };
+    }
+    for (const a of parsed.anomalies) {
+      window._lcgIndex[`${ns}__${a.id}`] = { kind: 'anom', ns, ...a };
+    }
   }
 
   const parts = [];
@@ -168,12 +189,12 @@ export function renderLcgHtml(parsed) {
         ? window._renderMd(parsed.advisorAnswer)
         : `<pre>${_esc(parsed.advisorAnswer)}</pre>`;
     parts.push(
-      `<div class="lcg-advisor"><div class="lcg-advisor-label">Advisor synthesis</div>${wrapInlineRefs(md, knownIds)}</div>`
+      `<div class="lcg-advisor"><div class="lcg-advisor-label">Advisor synthesis</div>${wrapInlineRefs(md, knownIds, ns)}</div>`
     );
   }
   if (parsed.hypotheses.length) {
     parts.push('<div class="lcg-hyp-grid">');
-    parts.push(parsed.hypotheses.map(_renderHypCard).join(''));
+    parts.push(parsed.hypotheses.map((h) => _renderHypCard(h, ns)).join(''));
     parts.push('</div>');
   }
   if (parsed.anomalies.length) {
@@ -190,11 +211,19 @@ export function renderLcgHtml(parsed) {
   return parts.join('\n');
 }
 
-/** Try to render content as lcg output. Returns null if input isn't lcg-shaped. */
+/** Try to render content as lcg output. Returns null if input isn't lcg-shaped.
+ *
+ *  Requires at least one parsed hypothesis or anomaly section before
+ *  activating the specialized cards UI. An "advisor only" parse (no cards)
+ *  used to trigger this path too — but renderLcgHtml then dropped everything
+ *  after the `---` separator, silently hiding producer output if section
+ *  parsing failed (e.g. format drift, `## hX` instead of `### hX`). Falling
+ *  back to plain markdown in that case preserves the full text.
+ */
 export function tryRenderLcg(content) {
   const parsed = parseLcgOutput(content);
   if (!parsed) return null;
-  if (!parsed.hypotheses.length && !parsed.advisorAnswer) return null;
+  if (!parsed.hypotheses.length && !parsed.anomalies.length) return null;
   return renderLcgHtml(parsed);
 }
 
