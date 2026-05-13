@@ -81,8 +81,8 @@ def _default_memory_root(project_dir: str | Path) -> Path:
     try:
         if project_path.resolve().is_relative_to(PROJECTS_DIR.resolve()):
             return DATA_ROOT / MEMORY_DIR_NAME
-    except OSError:
-        pass
+    except OSError as exc:
+        logger.warning("Failed to ...: {}", exc)
     return project_path / f".{MEMORY_DIR_NAME}"
 
 
