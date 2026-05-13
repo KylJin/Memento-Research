@@ -98,3 +98,52 @@ class TestQualityCriticSkillStructure:
     def test_mentions_ccf_a_or_icml_neurips_bar(self):
         text = QUALITY_CRITIC.read_text(encoding="utf-8")
         assert "CCF-A" in text or "NeurIPS" in text or "ICML" in text
+
+
+# ---------------------------------------------------------------------------
+# D9 — Language & Style enforcement (English default)
+# ---------------------------------------------------------------------------
+
+class TestEnglishDefaultAndLanguageDimension:
+    def test_convener_phase_3_requires_english_output(self):
+        """The initial draft (Phase 3) must be specified to be in English so
+        downstream stages and the critic can apply a single style standard."""
+        text = CONVENER.read_text(encoding="utf-8")
+        # Heading must exist + explicit English requirement nearby
+        assert "Phase 3: Write the Initial Methodology Draft" in text
+        # Search for the English mandate (case-insensitive on phrase)
+        lower = text.lower()
+        assert "english" in lower, (
+            "Convener must default the methodology output language to English "
+            "regardless of upstream stage language."
+        )
+
+    def test_convener_phase_7_has_writing_style_guidance(self):
+        """Final revise phase needs explicit writing-style rules so producers
+        avoid the academic-prose pitfalls D9 will check against."""
+        text = CONVENER.read_text(encoding="utf-8")
+        # Phase 7 should mention writing-style topics
+        for keyword in ("notation", "terminology", "topic sentence"):
+            assert keyword.lower() in text.lower(), (
+                f"Phase 7 should mention {keyword!r} as part of writing style"
+            )
+
+    def test_critic_has_d9_language_and_style(self):
+        text = QUALITY_CRITIC.read_text(encoding="utf-8")
+        assert "D9" in text, "Critic must include a D9 dimension for language/style"
+        assert "Language" in text and "Style" in text
+
+    def test_critic_d9_checks_english(self):
+        text = QUALITY_CRITIC.read_text(encoding="utf-8")
+        # D9 must demand the document be in English
+        lower = text.lower()
+        assert "english" in lower
+
+    def test_critic_d9_is_not_auto_reject(self):
+        """D9 failure should pull confidence but not auto-REJECT, matching
+        the existing decision rule pattern for D6/D7/D8."""
+        text = QUALITY_CRITIC.read_text(encoding="utf-8")
+        # Decision rule line should mention D9 alongside D6/D7/D8 (not in D1-D5)
+        assert "D9" in text
+        # The decision rule still names D1-D5 as the hard gate
+        assert "D1, D2, D3, D4, D5" in text

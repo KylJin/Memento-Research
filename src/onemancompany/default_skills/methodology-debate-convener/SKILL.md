@@ -174,6 +174,13 @@ write("stage4_methodology_v1_draft.md", draft_text)
 This v1 draft is *internal* — it never goes to the critic. The critic only
 sees the post-debate revision (Phase 7 output).
 
+**Output language**: write the v1 draft (and every downstream artefact) in
+**English**, regardless of what language the upstream stages used. The
+target venue (CCF-A / ICML / NeurIPS) expects English-only methodology
+sections, and the quality critic's D9 dimension auto-REJECTs non-English
+output. If Stage 1-3 produced Chinese or other-language results, translate
+their substance into English while preserving precise terms.
+
 **Why draft first**: without a concrete artifact to attack, debates drift into
 "what methodology in general is best" abstractions. With a draft to attack,
 participants point at specific paragraphs and propose specific edits.
@@ -344,6 +351,29 @@ This is unique to AutoResearch — the critic will literally search the
 methodology for transcript citations.
 - ✅ At least 2 places where a methodology decision quotes/paraphrases a named participant.
 - ❌ Decisions appear without grounding in transcript — signals you wrote in a vacuum.
+
+### Writing-style rules (D9 will check these — bake them in here)
+
+- **English only.** Even if Stage 1-3 produced Chinese results, the
+  methodology document is English. Translate substance, preserve precise
+  technical terms.
+- **Academic register.** Formal voice. No colloquialisms ("stuff",
+  "kinda", "a bunch of"). `we` is acceptable for methodological intent
+  ("we adopt a cluster RCT") but not narrative ("we kept trying things").
+- **Terminology lock.** Pick one term per concept early and use it
+  everywhere. If you pick `treatment / control`, never drift to
+  `intervention / baseline` later.
+- **Notation discipline.** Define every mathematical symbol on first use.
+  Use LaTeX-friendly inline math: `$\alpha = 0.05$`, `$X_i \sim \mathcal{N}(\mu, \sigma^2)$`,
+  not `alpha = 0.05` or `X_i ~ N(mu, sigma^2)`.
+- **Topic sentence per paragraph.** Each paragraph in Experimental Design
+  and Threats to Validity opens with a one-sentence claim, followed by
+  2-4 supporting sentences. Bullet lists are fine for enumerations
+  (Variables list, alternative-options list) but the Experimental Design
+  prose must be paragraphs.
+- **Tense consistency.** Debate already happened → past tense. Experiment
+  not yet run → `we will` or present-tense statement of intent. Don't
+  mix paragraph-to-paragraph.
 
 ### Synthesis rules
 

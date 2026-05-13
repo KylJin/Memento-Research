@@ -78,6 +78,35 @@ transcript in at least 2 places where a methodological decision was made.
 - ✅ Quote or paraphrase from named participant(s) for at least 2 decisions.
 - ❌ Methodology decisions appear without grounding in transcript — signals the producer wrote in a vacuum.
 
+### D9 — Language & Style (academic prose quality)
+A CCF-A reviewer will downgrade a structurally complete methodology if the
+writing is sloppy. Grade the prose against academic standards.
+
+- ✅ **Document is in English.** Default and only output language. If the
+  upstream stages produced Chinese / another language, the methodology must
+  still be written in English. The critic does NOT translate — REJECT if
+  the document is not in English.
+- ✅ **Academic register.** Formal voice. No colloquialisms ("kinda",
+  "thing", "stuff", "a bunch of"). No first-person plural for narrative
+  ("we'll see how it goes") — `we` is fine for design statements
+  ("we adopt a cluster RCT").
+- ✅ **Terminology consistency.** One term per concept across the whole
+  document. If `treatment / control` is chosen, never switch to
+  `intervention / baseline` halfway through.
+- ✅ **Notation discipline.** Mathematical symbols defined on first
+  appearance; consistent through the document. Use `$\alpha = 0.05$` style
+  LaTeX-friendly math (single-letter Greeks symbolised, not spelled out).
+- ✅ **Paragraph structure.** Each paragraph has a topic sentence + 2-4
+  supporting sentences. Bullet lists are fine for enumerations (variables,
+  threats) but the **Experimental Design** section MUST be prose paragraphs.
+- ✅ **Tense conventions.** Completed work (the debate happened) in past
+  tense. Planned work (the experiment we will run) in `we will / we plan
+  to`. Statements of methodological intent in present tense
+  ("we use cluster randomisation").
+- ❌ Document in a non-English language → REJECT (sole D9 case that auto-REJECTs).
+- ❌ Bullet-list-only Experimental Design (no prose).
+- ❌ Terminology switching, undefined notation, mixed tenses paragraph-to-paragraph.
+
 ---
 
 ## How to Run the Review
@@ -104,6 +133,7 @@ Per-dimension scoring:
   D6 Alternatives Considered: PASS / FAIL — <one sentence>
   D7 Reproducibility        : PASS / FAIL — <one sentence>
   D8 Citation of Debate     : PASS / FAIL — <one sentence>
+  D9 Language & Style       : PASS / FAIL — <one sentence>
 
 If REJECT, list the specific section(s) the producer must rewrite, with
 example improvements drawn from the debate transcript where possible.
@@ -111,12 +141,17 @@ example improvements drawn from the debate transcript where possible.
 
 ### Confidence scale
 
-- **0.90–1.00** All 8 dimensions PASS with clear margin. Methodology is CCF-A ready.
-- **0.75–0.89** Most PASS; 1-2 FAIL on D6/D7 (citation, repro) — usually quick fixes.
+- **0.90–1.00** All 9 dimensions PASS with clear margin. Methodology is CCF-A ready.
+- **0.75–0.89** Most PASS; 1-2 FAIL on D6/D7/D8/D9 (citation, repro, style) — usually quick fixes.
 - **0.55–0.74** Several FAILs including D3/D4/D5 — methodology unfinished; REJECT.
-- **0.00–0.54** Structural failure (missing sections, no transcript, hallucinated content). REJECT immediately.
+- **0.00–0.54** Structural failure (missing sections, no transcript, document not in English, hallucinated content). REJECT immediately.
 
-**Decision rule**: ALL of D1, D2, D3, D4, D5 must PASS to issue PASS. D6/D7/D8 failures alone are not auto-REJECT but should pull confidence below 0.85 — flag in reasoning so the producer fixes them before paper time.
+**Decision rule**: ALL of D1, D2, D3, D4, D5 must PASS to issue PASS.
+D6/D7/D8/D9 failures alone are not auto-REJECT but should pull confidence
+below 0.85 — flag in reasoning so the producer fixes them before paper
+time. **Exception**: a D9 failure caused by the document being in a
+non-English language IS auto-REJECT — the writing-style sub-failures (mixed
+tense, switching terminology) are not.
 
 ---
 
