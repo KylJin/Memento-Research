@@ -345,10 +345,19 @@ bash start.sh
 git clone https://github.com/1mancompany/OneManCompany.git
 cd OneManCompany
 
-# 2. 启动（自动安装 UV + Python，首次运行进入配置流程）
+# 2. 先创建本地配置文件
+cp .env.example .env
+
+# 3. 编辑 .env，至少填写：
+#    OPENROUTER_API_KEY=...
+#    DEFAULT_LLM_MODEL=...
+#    HOST=0.0.0.0
+#    PORT=8000
+
+# 4. 启动（自动安装 UV + Python，并基于仓库文件自举运行时数据）
 bash start.sh
 
-# 3. 打开浏览器
+# 5. 打开浏览器
 open http://localhost:8000    # macOS
 # xdg-open http://localhost:8000  # Linux
 # start http://localhost:8000     # Windows
@@ -357,29 +366,24 @@ open http://localhost:8000    # macOS
 ### 重启 / 重新配置
 
 ```bash
-# 通过 npx 重启服务器
-npx @1mancompany/onemancompany
-
 # 通过本地脚本重启服务器
 bash start.sh restart
+
+# 默认命令与 restart 等价
+bash start.sh
 
 # 停止本地服务器
 bash start.sh stop
 
+# 启动后端但不重建 .onemancompany
+bash start.sh start
+
 # 查看本地服务器状态
 bash start.sh status
-
-# 指定端口
-npx @1mancompany/onemancompany --port 8080
-
-# 重新运行配置流程
-npx @1mancompany/onemancompany init
-
-# 只重新运行本地配置流程，不启动服务
-bash start.sh init
 ```
 
-如果通过 npx 启动且服务正在运行，再次执行 `npx @1mancompany/onemancompany` 会提示是否停止当前服务并重新配置。选 y 将停服 → 重跑配置流程 → 重新启动。
+这个仓库不使用交互式 OMC onboarding。`start.sh` 会基于仓库中的
+`company/`、`config.yaml` 和 repo-root `.env` 自举 `.onemancompany/`。
 
 ### 卸载
 
