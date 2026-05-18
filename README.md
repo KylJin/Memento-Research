@@ -30,11 +30,17 @@ open http://localhost:8000
 # Rebuild .onemancompany from tracked repo files and restart backend
 bash start.sh
 
+# Same as above, but explicit
+bash start.sh restart
+
+# Check whether the backend is listening
+bash start.sh status
+
 # Stop backend only
-bash start.sh --stop
+bash start.sh stop
 
 # Start backend only (auto-bootstrap .onemancompany if needed)
-bash start.sh --start
+bash start.sh start
 ```
 
 This project does not use OMC's interactive onboarding wizard.

@@ -366,17 +366,24 @@ open http://localhost:8000    # macOS
 ### 重启 / 重新配置
 
 ```bash
-# 重启服务器
-npx @1mancompany/onemancompany
+# 通过本地脚本重启服务器
+bash start.sh restart
 
-# 指定端口
-npx @1mancompany/onemancompany --port 8080
+# 默认命令与 restart 等价
+bash start.sh
 
-# 重新运行配置流程
-npx @1mancompany/onemancompany init
+# 停止本地服务器
+bash start.sh stop
+
+# 启动后端但不重建 .onemancompany
+bash start.sh start
+
+# 查看本地服务器状态
+bash start.sh status
 ```
 
-如果通过 npx 启动且服务正在运行，再次执行 `npx @1mancompany/onemancompany` 会提示是否停止当前服务并重新配置。选 y 将停服 → 重跑配置流程 → 重新启动。
+这个仓库不使用交互式 OMC onboarding。`start.sh` 会基于仓库中的
+`company/`、`config.yaml` 和 repo-root `.env` 自举 `.onemancompany/`。
 
 ### 卸载
 

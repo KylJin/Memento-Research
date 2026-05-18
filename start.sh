@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# AutoResearch bootstrap/start script.
+# AutoResearch local service manager.
 #
 # This project does not use OMC's interactive onboarding wizard. Instead,
 # it bootstraps .onemancompany/ directly from the checked-in repo assets.
 #
 # Usage:
-#   bash start.sh          # Reset runtime data and restart backend
-#   bash start.sh --start  # Start backend only (auto-bootstrap if needed)
-#   bash start.sh --stop   # Stop backend only
+#   bash start.sh            # Rebuild runtime data and restart backend
+#   bash start.sh start      # Start backend only (auto-bootstrap if needed)
+#   bash start.sh stop       # Stop backend only
+#   bash start.sh restart    # Rebuild runtime data and restart backend
+#   bash start.sh status     # Show whether the backend is listening
+#
+# Backward-compatible aliases:
+#   bash start.sh --start
+#   bash start.sh --stop
 
 set -euo pipefail
 
@@ -21,6 +27,26 @@ LOG="/tmp/memento-research-backend.log"
 info()  { printf '\033[1;36m▸ %s\033[0m\n' "$*"; }
 warn()  { printf '\033[1;33m⚠ %s\033[0m\n' "$*"; }
 error() { printf '\033[1;31m✖ %s\033[0m\n' "$*" >&2; exit 1; }
+
+print_help() {
+  cat <<'EOF'
+Usage: bash start.sh [start|stop|restart|status|--start|--stop|--help]
+
+Commands:
+  (default)  Rebuild runtime data from this repo and restart backend
+  start      Start backend only, bootstrapping .onemancompany/ if needed
+  stop       Stop backend only
+  restart    Rebuild runtime data from this repo and restart backend
+  status     Show whether the backend is listening
+  --start    Alias for start
+  --stop     Alias for stop
+  --help     Show this help text
+
+Notes:
+  - This repo does not use the interactive OMC onboarding wizard.
+  - Runtime data is bootstrapped from ./company, ./config.yaml, and ./.env.
+EOF
+}
 
 ensure_uv() {
   if command -v uv >/dev/null 2>&1; then
@@ -73,17 +99,48 @@ resolve_port() {
   fi
 }
 
+listener_pids() {
+  local port
+  port="$(resolve_port)"
+  lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true
+}
+
 stop_backend() {
   local port pids
   port="$(resolve_port)"
-  pids="$(lsof -ti :"$port" 2>/dev/null || true)"
-  if [ -n "$pids" ]; then
-    info "Stopping backend on :$port (PIDs: $pids)..."
-    echo "$pids" | xargs kill -9 2>/dev/null || true
-    sleep 1
-  else
+  pids="$(listener_pids)"
+  if [ -z "$pids" ]; then
     info "No backend running on :$port"
+    return 0
   fi
+
+  info "Stopping backend on :$port (PIDs: $pids)..."
+  echo "$pids" | xargs kill -TERM 2>/dev/null || true
+
+  for _ in $(seq 1 20); do
+    if [ -z "$(listener_pids)" ]; then
+      info "Backend stopped"
+      return 0
+    fi
+    sleep 0.5
+  done
+
+  warn "Backend still running after SIGTERM, forcing shutdown"
+  echo "$pids" | xargs kill -9 2>/dev/null || true
+  sleep 1
+}
+
+status_backend() {
+  local port pids
+  port="$(resolve_port)"
+  pids="$(listener_pids)"
+  if [ -z "$pids" ]; then
+    info "Backend is not running on :$port"
+    return 1
+  fi
+
+  info "Backend is listening on :$port"
+  lsof -nP -iTCP:"$port" -sTCP:LISTEN
 }
 
 init_data() {
@@ -122,8 +179,8 @@ start_backend() {
     init_data
   fi
 
-  if lsof -ti :"$port" >/dev/null 2>&1; then
-    error "Port $port is already in use."
+  if [ -n "$(listener_pids)" ]; then
+    error "Port $port is already in use. Run 'bash start.sh restart' or 'bash start.sh stop'."
   fi
 
   info "Starting backend..."
@@ -133,7 +190,7 @@ start_backend() {
   info "Backend PID: $pid"
 
   for _ in $(seq 1 15); do
-    if lsof -ti :"$port" >/dev/null 2>&1; then
+    if [ -n "$(listener_pids)" ]; then
       info "Backend ready at http://localhost:$port"
       return 0
     fi
@@ -184,36 +241,28 @@ for cv in hires:
 "
 }
 
-print_help() {
-  cat <<'EOF'
-Usage: bash start.sh [--start | --stop | --help]
+COMMAND="${1:-restart}"
 
-Commands:
-  (default)  Reset runtime data from this repo and restart backend
-  --start    Start backend only, bootstrapping .onemancompany/ if needed
-  --stop     Stop backend only
-  --help     Show this help text
-
-Notes:
-  - This repo does not use the interactive OMC onboarding wizard.
-  - Runtime data is bootstrapped from ./company, ./config.yaml, and ./.env.
-EOF
-}
-
-case "${1:-}" in
+case "$COMMAND" in
   --help|-h)
     print_help
     ;;
-  --stop)
+  stop|--stop)
     stop_backend
     ;;
-  --start)
+  start|--start)
     start_backend
     ;;
-  *)
+  status)
+    status_backend
+    ;;
+  restart|"")
     stop_backend
     init_data
     start_backend
     hire_from_list
+    ;;
+  *)
+    error "Unknown command: $COMMAND. Run 'bash start.sh --help' for usage."
     ;;
 esac

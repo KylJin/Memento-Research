@@ -14,8 +14,8 @@ const fs = require("fs");
 const os = require("os");
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const REPO_URL = "https://github.com/1mancompany/OneManCompany.git";
-const DIR_NAME = "OneManCompany";
+const REPO_URL = "https://github.com/Memento-Teams/Memento-Research.git";
+const DIR_NAME = "Memento-Research";
 const PYTHON_VERSION = "3.12";
 
 // ── Colors ──────────────────────────────────────────────────────────────────
