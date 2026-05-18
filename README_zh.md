@@ -357,14 +357,26 @@ open http://localhost:8000    # macOS
 ### 重启 / 重新配置
 
 ```bash
-# 重启服务器
+# 通过 npx 重启服务器
 npx @1mancompany/onemancompany
+
+# 通过本地脚本重启服务器
+bash start.sh restart
+
+# 停止本地服务器
+bash start.sh stop
+
+# 查看本地服务器状态
+bash start.sh status
 
 # 指定端口
 npx @1mancompany/onemancompany --port 8080
 
 # 重新运行配置流程
 npx @1mancompany/onemancompany init
+
+# 只重新运行本地配置流程，不启动服务
+bash start.sh init
 ```
 
 如果通过 npx 启动且服务正在运行，再次执行 `npx @1mancompany/onemancompany` 会提示是否停止当前服务并重新配置。选 y 将停服 → 重跑配置流程 → 重新启动。

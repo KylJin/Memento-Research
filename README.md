@@ -8,8 +8,8 @@
 ## Quick Start
 
 ```bash
-# Pull latest and restart (reset data + backend)
-git pull && ./scripts/reset.sh
+# Pull latest and restart
+git pull && bash start.sh restart
 
 # Open in browser
 open http://localhost:8000
@@ -18,19 +18,28 @@ open http://localhost:8000
 ## Commands
 
 ```bash
-# Full reset: stop backend → wipe data → copy company config → start backend
-./scripts/reset.sh
+# Start the backend in the current terminal
+bash start.sh
 
-# Stop backend only
-./scripts/reset.sh --stop
+# Stop the backend on port 8000
+bash start.sh stop
 
-# Start backend only (no data reset)
-./scripts/reset.sh --start
+# Restart the backend on port 8000
+bash start.sh restart
+
+# Re-run the setup wizard only
+bash start.sh init
+
+# Check whether the backend is listening
+bash start.sh status
 ```
 
 ## Logs
 
 ```bash
-# Live backend logs
+# Detached mode
+nohup bash start.sh restart > /tmp/omc-backend.log 2>&1 &
+
+# Live logs
 tail -f /tmp/omc-backend.log
 ```
