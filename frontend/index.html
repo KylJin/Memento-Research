@@ -636,6 +636,15 @@ function switchProject(pid) {
   if (hero && proj.stagesHtml) hero.style.display = 'none';
   else if (hero && !proj.stagesHtml) hero.style.display = '';
 
+  // Hydrate from backend when the in-memory state is empty (post-refresh, or any
+  // project beyond the one auto-restored by restoreLastSession). Without this
+  // fetch, clicking a project after a hard refresh leaves the meetings area
+  // and workspace blank because all in-memory project state was wiped.
+  const hasInMemoryState = (proj.stagesHtml && proj.stagesHtml.length > 0)
+    || (proj.wsFiles && proj.wsFiles.size > 0);
+  if (!hasInMemoryState && typeof window.restoreProjectView === 'function') {
+    window.restoreProjectView(pid);
+  }
 
   // Replay any buffered events that arrived while this project was in the background
   if (typeof replayBufferedEvents === 'function') replayBufferedEvents(pid);
