@@ -2550,26 +2550,44 @@ class EmployeeManager:
         # --- Pipeline engine check ---
         # If this task is managed by the pipeline engine, route to it
         # instead of normal gate/review logic. The engine handles everything.
-        if node.status in (TaskPhase.COMPLETED.value, TaskPhase.ACCEPTED.value, TaskPhase.FINISHED.value):
+        #
+        # IMPORTANT: this fires for ALL terminal statuses — completed/accepted/
+        # finished AND failed. Before this fix, only the success statuses
+        # routed to the engine; FAILED fell through to the legacy "EA-anchor
+        # completion" check below, which mistook Stage 1's producer for an EA
+        # orchestrator and declared the entire project complete the moment any
+        # later stage failed. The pipeline engine now owns FAILED handling
+        # (treats it as a retryable producer failure analogous to a critic
+        # REJECT).
+        _node_meta = getattr(node, 'metadata', None) or {}
+        if _node_meta.get("pipeline_managed") and node.status in (
+            TaskPhase.COMPLETED.value,
+            TaskPhase.ACCEPTED.value,
+            TaskPhase.FINISHED.value,
+            TaskPhase.FAILED.value,
+        ):
             from onemancompany.core.pipeline_engine import get_or_load_pipeline
-            _node_meta = getattr(node, 'metadata', None) or {}
-            if _node_meta.get("pipeline_managed"):
-                _pdir = node.project_dir or str(Path(entry.tree_path).parent)
-                engine = get_or_load_pipeline(project_id, _pdir)
-                if engine:
-                    result = node.result or ""
-                    logger.info(
-                        "[PIPELINE] Task complete: employee={} node={} → routing to pipeline engine (stage={}, phase={})",
-                        employee_id, entry.node_id, engine.current_stage, engine.phase,
-                    )
-                    # Auto-accept the node so the tree stays clean
-                    if node.status == TaskPhase.COMPLETED.value:
-                        node.set_status(TaskPhase.ACCEPTED)
-                        node.acceptance_result = {"passed": True, "notes": "auto-accepted (pipeline engine)"}
-                        node.set_status(TaskPhase.FINISHED)
-                        save_tree_async(entry.tree_path)
+            _pdir = node.project_dir or str(Path(entry.tree_path).parent)
+            engine = get_or_load_pipeline(project_id, _pdir)
+            if engine:
+                result = node.result or ""
+                logger.info(
+                    "[PIPELINE] Task {} : employee={} node={} → routing to pipeline engine (stage={}, phase={})",
+                    "failed" if task_failed else "complete",
+                    employee_id, entry.node_id, engine.current_stage, engine.phase,
+                )
+                # Auto-accept the node on success so the tree stays clean.
+                # FAILED nodes keep their failed status; engine re-dispatches.
+                if node.status == TaskPhase.COMPLETED.value:
+                    node.set_status(TaskPhase.ACCEPTED)
+                    node.acceptance_result = {"passed": True, "notes": "auto-accepted (pipeline engine)"}
+                    node.set_status(TaskPhase.FINISHED)
+                    save_tree_async(entry.tree_path)
+                if task_failed:
+                    engine.on_task_failed(employee_id, entry.node_id, result)
+                else:
                     engine.on_task_complete(employee_id, entry.node_id, result)
-                    return  # Pipeline engine handles everything from here
+                return  # Pipeline engine handles everything from here
 
         # --- Propagate upward: review / auto-complete parent ---
         # CEO prompt nodes are containers — they don't need review or auto-complete.

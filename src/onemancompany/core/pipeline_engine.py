@@ -370,6 +370,47 @@ class PipelineEngine:
                     self._save()
                     self._emit_gate_event(stage["id"], confidence, exhausted=True)
 
+    def on_task_failed(self, employee_id: str, node_id: str, result: str):
+        """Called by vessel when a pipeline-managed task fails (the agent
+        threw, timed out, or otherwise produced no usable output).
+
+        Treated symmetrically with a critic REJECT: if retries remain, the
+        engine re-dispatches the producer with the failure context as
+        feedback; otherwise it opens the CEO gate so the user can decide
+        whether to revise, retry, or abandon.
+
+        Without this hook a failed pipeline node would fall through to
+        vessel.py's legacy completion check, which would mistake the
+        first-completed stage anchor for an EA orchestrator and declare
+        the project complete — exactly the bug fixed in the same change
+        that introduced this method.
+        """
+        stage = self._stage_def()
+        truncated = (result or "(no output)").strip()[:600]
+        failure_feedback = (
+            f"Producer for Stage {stage['id']} ({stage['name']}) failed without producing a deliverable. "
+            f"Failure context:\n{truncated}"
+        )
+        retries = self.state.get("retries", 0)
+        if retries < MAX_RETRIES:
+            self.state["retries"] = retries + 1
+            self.state["phase"] = "producer"
+            self._save()
+            logger.warning(
+                "[PIPELINE] Stage {} producer FAILED (retry {}/{}) — re-dispatching",
+                stage["id"], retries + 1, MAX_RETRIES,
+            )
+            self._emit_stage_event("stage_failed", stage["id"])
+            self._dispatch_producer(feedback=failure_feedback)
+        else:
+            logger.error(
+                "[PIPELINE] Stage {} exhausted retries after producer failure — holding for CEO",
+                stage["id"],
+            )
+            self.state["phase"] = "gate"
+            self._save()
+            self._emit_gate_event(stage["id"], confidence=None, exhausted=True)
+
     def _on_critic_pass(self, result: str, confidence: float = None):
         """Critic passed → hold for CEO gate."""
         stage = self._stage_def()
@@ -517,6 +558,11 @@ class PipelineEngine:
 
     def _emit_pipeline_complete(self):
         import asyncio
+        # Close the CEO root in the task tree so the UI's
+        # "project complete" affordance fires HERE — at the end of the
+        # pipeline — instead of at the legacy EA-anchor completion point
+        # (which mis-fired after Stage 1).
+        self._mark_ceo_root_finished()
         payload = {
             "type": "pipeline_complete",
             "project_id": self.project_id,
@@ -528,3 +574,34 @@ class PipelineEngine:
             loop.create_task(self._emit_async(payload))
         except RuntimeError as exc:
             logger.debug("Skipping pipeline complete event; no running event loop: {}", exc)
+
+    def _mark_ceo_root_finished(self) -> None:
+        """On pipeline completion, advance the CEO root through the legal
+        status transitions to FINISHED so downstream consumers (project
+        archive, frontend completion banner) see the project as closed.
+        """
+        try:
+            from onemancompany.core.task_tree import get_tree, save_tree_async
+            from onemancompany.core.task_lifecycle import NodeType, TaskPhase
+            from onemancompany.core.config import TASK_TREE_FILENAME
+
+            tree_path = Path(self.project_dir) / TASK_TREE_FILENAME
+            if not tree_path.exists():
+                return
+            tree = get_tree(tree_path, project_id=self.project_id)
+            root = tree.get_node(tree.root_id) if tree.root_id else None
+            if not root or root.node_type != NodeType.CEO_PROMPT:
+                return
+            if root.status not in (TaskPhase.FINISHED.value, TaskPhase.ACCEPTED.value):
+                if root.status == TaskPhase.PENDING.value:
+                    root.set_status(TaskPhase.PROCESSING)
+                root.set_status(TaskPhase.COMPLETED)
+                root.set_status(TaskPhase.ACCEPTED)
+                root.set_status(TaskPhase.FINISHED)
+                save_tree_async(str(tree_path))
+                logger.info(
+                    "[PIPELINE] Marked CEO root {} → FINISHED on pipeline completion",
+                    root.id,
+                )
+        except Exception as exc:  # pragma: no cover — defensive logging
+            logger.warning("[PIPELINE] Failed to finalize CEO root on completion: {}", exc)
