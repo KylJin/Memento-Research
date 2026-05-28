@@ -56,18 +56,21 @@ function _shorten(s, max = 32) {
 }
 
 // Pull hypothesis IDs the advisor used as `### h202 — title` section headings.
-// The `## References` section also contains `### h{id}` sub-headings (without
+// IDs are either critic `h\d+` or creator `a\d+#cr\d+` — both must reach
+// /query/graph so the graph matches the rendered cards (a creator-only report
+// would otherwise send no ids and fall back to a topic-top-k graph).
+// The `## References` section also contains `### {id}` sub-headings (without
 // titles) for each cited hypothesis; we want only the advisor's own ideas,
 // which are everything BEFORE the `## References` block.
 // Falls back to looser inline citations when no h3 ID headings are present.
 function _parseCitedIds(content) {
   const refsIdx = content.search(/^##\s+References\b/m);
   const advisorScope = refsIdx >= 0 ? content.slice(0, refsIdx) : content;
-  const heads = [...advisorScope.matchAll(/^###\s+(h\d{2,4})\b/gm)].map(m => m[1]);
+  const heads = [...advisorScope.matchAll(/^###\s+(h\d{2,4}|a\d+#cr\d+)\b/gm)].map(m => m[1]);
   if (heads.length) return [...new Set(heads)];
   const seen = new Set();
   const ids = [];
-  for (const m of advisorScope.matchAll(/\b(h\d{2,4})\b/g)) {
+  for (const m of advisorScope.matchAll(/\b(h\d{2,4}|a\d+#cr\d+)\b/g)) {
     if (!seen.has(m[1])) { seen.add(m[1]); ids.push(m[1]); }
   }
   return ids.slice(0, 12);

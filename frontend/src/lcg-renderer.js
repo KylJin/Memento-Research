@@ -18,7 +18,9 @@
 //
 // Functions are pure where possible; DOM mutation is isolated to setupLcgHover().
 
-const _ID_RE = /\b([ha]\d{3,4})\b/g;
+// Inline ref ids: creator `a461#cr2` (try first so it isn't truncated to a461)
+// or critic/anomaly `h225` / `a461`.
+const _ID_RE = /\b(?:a\d{2,4}#cr\d+|[ha]\d{3,4})\b/g;
 
 function _esc(s) {
   return String(s == null ? '' : s)

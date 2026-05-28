@@ -624,9 +624,14 @@ async function hydrateProjectFromBackend(pid) {
     }
     updateProducer(cardId, content);
     const isCurrent = sid === currentStage;
+    // Backend phase is producer|critic|gate|done|failed (pipeline_engine.py),
+    // never 'reviewing'. Map it to the UI status so a hydrated project sitting
+    // at the critic/gate step is restored correctly instead of showing 'running'.
+    const _phaseUi = { producer: 'running', critic: 'reviewing', gate: 'gate', failed: 'failed' };
     if (isCurrent && phase && phase !== 'done') {
-      setCardStatus(cardId, phase === 'reviewing' ? 'reviewing' : 'running');
-      setStage(sid, phase === 'reviewing' ? 'reviewing' : 'running');
+      const ui = _phaseUi[phase] || 'running';
+      setCardStatus(cardId, ui);
+      setStage(sid, ui);
     } else {
       setCardStatus(cardId, 'done');
       setStage(sid, 'done');
